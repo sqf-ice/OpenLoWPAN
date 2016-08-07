@@ -1,0 +1,113 @@
+EESchema Schematic File Version 2
+LIBS:power
+LIBS:device
+LIBS:transistors
+LIBS:conn
+LIBS:linear
+LIBS:regul
+LIBS:74xx
+LIBS:cmos4000
+LIBS:adc-dac
+LIBS:memory
+LIBS:xilinx
+LIBS:microcontrollers
+LIBS:dsp
+LIBS:microchip
+LIBS:analog_switches
+LIBS:motorola
+LIBS:intel
+LIBS:audio
+LIBS:interface
+LIBS:digital-audio
+LIBS:philips
+LIBS:display
+LIBS:cypress
+LIBS:siliconi
+LIBS:opto
+LIBS:atmel
+LIBS:contrib
+LIBS:valves
+LIBS:stm32
+LIBS:rfcom
+LIBS:texas
+LIBS:dongle
+LIBS:dongle-cache
+EELAYER 25 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 1 3
+Title "6LoWPAN / IEEE 802.15.4 USB dongle"
+Date "2016-08-07"
+Rev "A"
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Sheet
+S 4000 3250 1500 1600
+U 57A46712
+F0 "STM32 Microcontroller & Power" 50
+F1 "MCU.sch" 50
+F2 "RF_MCO" O R 5500 4100 50 
+F3 "RF_MISO" I R 5500 3800 50 
+F4 "RF_MOSI" O R 5500 3900 50 
+F5 "RF_nRST" O R 5500 3300 50 
+F6 "RF_GPIO0" B R 5500 4300 50 
+F7 "RF_GPIO1" B R 5500 4400 50 
+F8 "RF_GPIO2" B R 5500 4500 50 
+F9 "RF_GPIO3" B R 5500 4600 50 
+F10 "RF_GPIO4" B R 5500 4700 50 
+F11 "RF_GPIO5" B R 5500 4800 50 
+F12 "RF_nPDN" O R 5500 3400 50 
+F13 "RF_nCS" O R 5500 3600 50 
+F14 "RF_SCK" O R 5500 3700 50 
+$EndSheet
+Wire Wire Line
+	5500 3300 6100 3300
+Wire Wire Line
+	6100 3400 5500 3400
+Wire Wire Line
+	6100 3800 5500 3800
+Wire Wire Line
+	5500 3900 6100 3900
+Wire Wire Line
+	5500 4100 6100 4100
+Wire Wire Line
+	6100 4300 5500 4300
+Wire Wire Line
+	5500 4400 6100 4400
+Wire Wire Line
+	6100 4500 5500 4500
+Wire Wire Line
+	5500 4600 6100 4600
+Wire Wire Line
+	6100 4700 5500 4700
+Wire Wire Line
+	5500 4800 6100 4800
+$Sheet
+S 6100 3250 1550 1600
+U 57A536C5
+F0 "Radio" 50
+F1 "radio.sch" 50
+F2 "RF_nPDN" I L 6100 3400 50 
+F3 "RF_nRST" I L 6100 3300 50 
+F4 "RF_MOSI" I L 6100 3900 50 
+F5 "RF_MISO" O L 6100 3800 50 
+F6 "RF_GPIO0" B L 6100 4300 50 
+F7 "RF_GPIO1" B L 6100 4400 50 
+F8 "RF_GPIO2" B L 6100 4500 50 
+F9 "RF_GPIO3" B L 6100 4600 50 
+F10 "RF_GPIO4" B L 6100 4700 50 
+F11 "RF_GPIO5" B L 6100 4800 50 
+F12 "RF_MCO" I L 6100 4100 50 
+F13 "RF_nCS" I L 6100 3600 50 
+F14 "RF_SCK" I L 6100 3700 50 
+$EndSheet
+Wire Wire Line
+	6100 3600 5500 3600
+Wire Wire Line
+	5500 3700 6100 3700
+$EndSCHEMATC

@@ -1,0 +1,26 @@
+Reference, Value, Footprint, Datasheet
+"C1, C3, C6, C8, C14",4.7µF,0805,
+"C2, C4, C5, C7, C9, C10, C11, C12, C13, C23",100nF,0402,
+"C15, C17",1.8pF,0402,
+C16,39pF,0402,
+C18,1pF,0402,
+C19,82pF,0402,
+C20,1.5pF,0402,
+"C21, C22",22pF,0402,
+D1,RX,0805,
+D2,TX,0805,
+"JP1, JP2",Jumper,0805,
+"JP3, JP4, JP5",Jumper,0402,
+L1,1K,0402,
+P1,USB,USBA-M-SM,http://www.cnkls.com/admin/product_upload/20120509104024KLS1-180B.pdf
+P2,SWD,Pin_Header_Straight_1x05,
+P3,SMA,SMA-J,http://www.cnkls.com/admin/product_upload/20120512140122KLS1-SMA001.pdf
+R1,100k,0805,
+R2,1k,0805,
+R3,1k,0805,
+R4,56k,0402,
+SW1,RESET,KFC-003D,
+U1,NCP1117ST33T3G,SOT-223,https://www.onsemi.com/pub/Collateral/NCP1117-D.PDF
+U2,STM32F072C8Tx,LQFP-48,http://www.st.com/resource/en/datasheet/stm32f072c8.pdf
+U3,CC2520,QFN-28,http://www.ti.com/lit/gpn/cc2520
+Y1,32MHz,3225,
