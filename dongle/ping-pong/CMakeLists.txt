@@ -21,6 +21,7 @@ SET(STM32_LINKER_SCRIPT ${ChibiOS_LINKER_SCRIPT})
 
 SET(SOURCE_FILES 
     main.c 
+    cc2520.c
     ${CMAKE_SOURCE_DIR}/../board/board.c
 )
 
