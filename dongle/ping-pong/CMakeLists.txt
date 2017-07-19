@@ -7,7 +7,7 @@ PROJECT(dongle-ping-pong)
 
 ENABLE_LANGUAGE(ASM)
 
-FIND_PACKAGE(ChibiOS 16 COMPONENTS rt hal ext gpt pal serial serial_usb spi st usb REQUIRED)
+FIND_PACKAGE(ChibiOS 17 COMPONENTS rt hal ext gpt pal serial serial_usb spi st usb queues REQUIRED)
 
 INCLUDE_DIRECTORIES(
     ${CMAKE_SOURCE_DIR}
