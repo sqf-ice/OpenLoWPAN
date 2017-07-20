@@ -18,7 +18,6 @@ typedef struct
 
 void cc2520Start(CC2520Driver *ccp, const CC2520Config *config);
 
-
 uint8_t cc2520SendOp(CC2520Driver *ccp, uint8_t op);
 void cc2520Op(CC2520Driver *ccp, uint8_t op);
 
@@ -39,6 +38,7 @@ void cc2520FrameFilterAddAddress(CC2520Driver *ccp, uint8_t id, bool extended, c
 void cc2520FrameFilterRemoveAddress(CC2520Driver *ccp, uint8_t id, bool extended);
 void cc2520FrameFilterSetLocalAddress(CC2520Driver *ccp, bool extended, const MAC802145Address *address);
 void cc2520SetupGPIO(CC2520Driver *ccp, uint8_t gpio, uint8_t mode, bool polarity);
+void cc2520SetupClockOutput(CC2520Driver *ccp, bool enabled, uint8_t div);
 
 void cc2520RxOn(CC2520Driver *ccp);
 void cc2520TxOn(CC2520Driver *ccp);

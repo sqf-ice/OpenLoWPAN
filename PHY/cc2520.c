@@ -6,8 +6,6 @@ void cc2520Start(CC2520Driver *ccp, const CC2520Config *config)
     ccp->config = config;
 
     //Startup sequence from datasheet
-    cc2520Reset(ccp);
-
     cc2520WriteReg(ccp, CC2520_REG_TXPOWER,     0x32);
     cc2520WriteReg(ccp, CC2520_REG_CCACTRL0,    0xF8);
     cc2520WriteReg(ccp, CC2520_REG_MDMCTRL0,    0x85);
@@ -260,6 +258,19 @@ void cc2520SetupGPIO(CC2520Driver *ccp, uint8_t gpio, uint8_t mode, bool polarit
     uint8_t rPol = cc2520ReadReg(ccp, CC2520_REG_GPIOPOLARITY);
     rPol = (rPol & (~(1 << gpio))) | ((polarity ? 1 : 0) << gpio);
     cc2520WriteReg(ccp, CC2520_REG_GPIOPOLARITY, rPol);
+}
+
+void cc2520SetupClockOutput(CC2520Driver *ccp, bool enabled, uint8_t div)
+{
+    if (div < 2)
+        div = 2;
+
+    if (div > 32)
+        div = 32;
+
+    uint8_t reg = cc2520ReadReg(ccp, CC2520_REG_EXTCLOCK);
+    reg = ((enabled ? 1 : 0) << 5) | (32 - div);
+    cc2520WriteReg(ccp, CC2520_REG_EXTCLOCK, reg);
 }
 
 void cc2520ReadMemory(CC2520Driver *ccp, uint16_t address, uint8_t n, uint8_t *data)
