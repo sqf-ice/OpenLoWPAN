@@ -9,7 +9,7 @@
 #define PING_PONG_PAN_ID        0xDEAD
 #define PING_PONG_DEVICE_ID     0xBEEF
 
-static void rxIRQ(EXTDriver *extp, expchannel_t channel);
+static void frameIRQ(EXTDriver *extp, expchannel_t channel);
 
 static const EXTConfig extcfg = {
     {
@@ -21,7 +21,7 @@ static const EXTConfig extcfg = {
         {EXT_CH_MODE_DISABLED, NULL},
         {EXT_CH_MODE_DISABLED, NULL},
         {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
+        {EXT_CH_MODE_FALLING_EDGE | EXT_CH_MODE_AUTOSTART | EXT_MODE_GPIOB, rxIRQ},
         {EXT_CH_MODE_FALLING_EDGE | EXT_CH_MODE_AUTOSTART | EXT_MODE_GPIOB, rxIRQ},
         {EXT_CH_MODE_DISABLED, NULL},
         {EXT_CH_MODE_DISABLED, NULL},

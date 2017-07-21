@@ -51,5 +51,7 @@ void cc2520WriteTxFIFO(CC2520Driver *ccp, uint8_t n, const uint8_t *data);
 void cc2520ReadRxFIFO(CC2520Driver *ccp, uint8_t n, uint8_t *data);
 void cc2520WriteTxPacket(CC2520Driver *ccp, const MAC802145FrameHeader* h, uint8_t n, const uint8_t *data);
 void cc2520ReadRxPacket(CC2520Driver *ccp, MAC802145FrameHeader* h, uint8_t n, uint8_t *data);
+uint8_t cc2520ReadRawPacket(CC2520Driver *ccp, uint8_t *data);
+
 
 #endif

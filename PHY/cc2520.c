@@ -133,7 +133,7 @@ void cc2520ReadRxFIFO(CC2520Driver *ccp, uint8_t n, uint8_t *data)
 
 void cc2520ReadRxPacket(CC2520Driver *ccp, MAC802145FrameHeader* h, uint8_t maxn, uint8_t *data)
 {
-    uint8_t hdata[MAC802145_MAX_FRAME_SIZE];
+    uint8_t hdata[MAC802145_MAX_HEADER_SIZE];
     uint8_t headerSize, dataSize;
     uint16_t dataOk;
 
@@ -156,6 +156,23 @@ void cc2520ReadRxPacket(CC2520Driver *ccp, MAC802145FrameHeader* h, uint8_t maxn
     spiUnselect(ccp->config->spi);
 
     mac802145UnpackHeader(hdata, h);
+}
+
+uint8_t cc2520ReadRawPacket(CC2520Driver *ccp, uint8_t *data)
+{
+    uint8_t size;
+
+    spiSelect(ccp->config->spi);
+    cc2520SendOp(ccp, CC2520_OP_RXBUF);
+    spiReceive(ccp->config->spi, 1, &size);
+
+    if (size > 127)
+        return 0;
+
+    spiReceive(ccp->config->spi, size, data);
+    spiUnselect(ccp->config->spi);
+
+    return size;
 }
 
 void cc2520FrameFilterSetup(CC2520Driver *ccp, bool enabled, bool coordinator)
