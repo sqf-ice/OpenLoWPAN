@@ -158,23 +158,6 @@ void cc2520ReadRxPacket(CC2520Driver *ccp, MAC802145FrameHeader* h, uint8_t maxn
     mac802145UnpackHeader(hdata, h);
 }
 
-uint8_t cc2520ReadRawPacket(CC2520Driver *ccp, uint8_t *data)
-{
-    uint8_t size;
-
-    spiSelect(ccp->config->spi);
-    cc2520SendOp(ccp, CC2520_OP_RXBUF);
-    spiReceive(ccp->config->spi, 1, &size);
-
-    if (size > 127)
-        return 0;
-
-    spiReceive(ccp->config->spi, size, data);
-    spiUnselect(ccp->config->spi);
-
-    return size;
-}
-
 void cc2520FrameFilterSetup(CC2520Driver *ccp, bool enabled, bool coordinator)
 {
     uint8_t frmfilt = 0xC;
@@ -308,4 +291,22 @@ void cc2520WriteMemory(CC2520Driver *ccp, uint16_t address, uint8_t n, const uin
     spiSend(ccp->config->spi, 1, &addr_lsb);
     spiSend(ccp->config->spi, n, data);
     spiUnselect(ccp->config->spi);
+}
+
+uint8_t cc2520RxFIFOCount(CC2520Driver *ccp)
+{
+    return cc2520ReadReg(ccp, CC2520_REG_RXFIFOCNT);
+}
+
+uint32_t cc2520GetExceptions(CC2520Driver *ccp)
+{
+    uint8_t exceptions[3];
+    cc2520ReadMemory(ccp, CC2520_REG_EXCFLAG0, 3, exceptions);
+    return (exceptions[2] << 16) | (exceptions[1] << 8) | (exceptions[0]);
+}
+
+void cc2520ClearExceptions(CC2520Driver *ccp, uint32_t exc)
+{
+    uint8_t exceptions[3] = {~(exc & 0xFF), ~((exc >> 8) & 0xFF), ~((exc >> 16) & 0xFF)};
+    cc2520WriteMemory(ccp, CC2520_REG_EXCFLAG0, 3, exceptions);
 }

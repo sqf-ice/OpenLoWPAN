@@ -72,7 +72,7 @@ static void rxIRQ(EXTDriver *extp, expchannel_t channel)
 {
     (void)extp;
 
-    if (channel == PAL_PAD(LINE_RF_GPIO0))
+    if (channel == PAL_PAD(GPIO_RF_GPIO0))
     {
         uint16_t timOffset = gptGetCounterX(&GPTD3);
         lastPacketTimestamp = usTimer + timOffset;
@@ -82,20 +82,20 @@ static void rxIRQ(EXTDriver *extp, expchannel_t channel)
     chSysUnlockFromISR();
 }
 
-static SnifferHeader snifferHeader;
 static uint8_t buf[128];
+static SnifferHeader snifferHeader;
 
 static THD_FUNCTION(sniffer, arg)
 {
     spiStart(&SPID1, &spiConfig);
 
-    palSetLine(LINE_LED_TX);
+    palSetLine(GPIO_LED_TX);
     chThdSleepMilliseconds(100);
 
-    palClearLine(LINE_RF_RST);
-    palSetLine(LINE_RF_PDN);
+    palClearLine(GPIO_RF_RST);
+    palSetLine(GPIO_RF_PDN);
     chThdSleepMicroseconds(100);
-    palSetLine(LINE_RF_RST);
+    palSetLine(GPIO_RF_RST);
     chThdSleepMicroseconds(200);
 
     cc2520Start(&CC2520D, &cc2520Config);
@@ -121,65 +121,63 @@ static THD_FUNCTION(sniffer, arg)
     while (!chThdShouldTerminateX())
     {
         chSysLock();
-        chThdEnqueueTimeoutS(&rxQueue, S2ST(1));
+        chThdEnqueueTimeoutS(&rxQueue, MS2ST(100));
         chSysUnlock();
 
         if (chThdShouldTerminateX())
             break;
 
-        uint32_t exceptions = 0;
-        exceptions = cc2520ReadReg(&CC2520D, CC2520_REG_EXCFLAG0);
-        exceptions |= (cc2520ReadReg(&CC2520D, CC2520_REG_EXCFLAG1)) << 8;
-        exceptions |= (cc2520ReadReg(&CC2520D, CC2520_REG_EXCFLAG2)) << 16;
+        uint32_t exceptions = cc2520GetExceptions(&CC2520D);
+        cc2520ClearExceptions(&CC2520D, exceptions);
 
-        cc2520WriteReg(&CC2520D, CC2520_REG_EXCFLAG0, ~(exceptions & 0xFF));
-        cc2520WriteReg(&CC2520D, CC2520_REG_EXCFLAG1, ~((exceptions >> 8) & 0xFF));
-        cc2520WriteReg(&CC2520D, CC2520_REG_EXCFLAG2, ~((exceptions >> 16) & 0xFF));
-
-        if (exceptions & (1 << 6))
+        while (exceptions & ((1 << 6) | (1 << 8) | (1 << 13)))
         {
-            cc2520TRxOff(&CC2520D);
-            cc2520RxOn(&CC2520D);
-            cc2520FlushRx(&CC2520D);
-            continue;
-        }
-
-        if (exceptions & (1 << 13))
-            packetTime = lastPacketTimestamp;
-
-        if (exceptions & (1 << 8))
-        {
-            uint8_t size = cc2520ReadRawPacket(&CC2520D, buf);
-
-            if (!size || (size > 127))
+            if (exceptions & (1 << 6))
             {
                 cc2520TRxOff(&CC2520D);
-                cc2520RxOn(&CC2520D);
                 cc2520FlushRx(&CC2520D);
-                continue;
+                cc2520RxOn(&CC2520D);
+                break;
             }
 
-            snifferHeader.magic = SNIFFER_MAGIC;
-            snifferHeader.size = size;
-            snifferHeader.ts = packetTime;
+            if (exceptions & (1 << 13))
+                packetTime = lastPacketTimestamp;
 
-            if (SDU1.state == SDU_READY)
+            if (exceptions & (1 << 8))
             {
-                chnWrite(&SDU1, (uint8_t*)&snifferHeader, sizeof(SnifferHeader));
-                chnWrite(&SDU1, buf, size);
+                uint8_t size = cc2520RxFIFOCount(&CC2520D);
+
+                if (size > 128)
+                    break;
+
+                cc2520ReadRxFIFO(&CC2520D, size, buf);
+                size = buf[0] > (size - 1) ? (size - 1) : buf[0];
+
+                snifferHeader.magic = SNIFFER_MAGIC;
+                snifferHeader.size = size;
+                snifferHeader.ts = packetTime;
+
+                if (SDU1.state == SDU_READY)
+                {
+                    chnWrite(&SDU1, (uint8_t*)&snifferHeader, sizeof(SnifferHeader));
+                    chnWrite(&SDU1, buf + 1, size);
+                }
             }
+            exceptions = cc2520GetExceptions(&CC2520D);
+            cc2520ClearExceptions(&CC2520D, exceptions);
         }
     }
 
     cc2520TRxOff(&CC2520D);
 
+    extChannelDisable(&EXTD1, 8);
     extChannelDisable(&EXTD1, 9);
     extStop(&EXTD1);
 
-    palClearLine(LINE_RF_RST);
-    palClearLine(LINE_RF_PDN);
+    palClearLine(GPIO_RF_RST);
+    palClearLine(GPIO_RF_PDN);
 
-    palClearLine(LINE_LED_TX);
+    palClearLine(GPIO_LED_TX);
 
     spiStop(&SPID1);
 }
@@ -235,8 +233,8 @@ int main(void)
         chThdEnqueueTimeoutS(&rxQueue, TIME_INFINITE);
         chSysUnlock();
 
-        palSetLine(LINE_LED_RX);
+        palSetLine(GPIO_LED_RX);
         chThdSleepMilliseconds(100);
-        palClearLine(LINE_LED_RX);
+        palClearLine(GPIO_LED_RX);
     }
 }

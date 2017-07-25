@@ -139,34 +139,32 @@
 /*
  * IO lines assignments.
  */
-#define LINE_RF_CS                  PAL_LINE(GPIOA, 4U)
-#define LINE_RF_SCK                 PAL_LINE(GPIOA, 5U)
-#define LINE_RF_MISO                PAL_LINE(GPIOA, 6U)
-#define LINE_RF_MOSI                PAL_LINE(GPIOA, 7U)
-#define LINE_RF_MCO                 PAL_LINE(GPIOA, 8U)
-#define LINE_USB_DM                 PAL_LINE(GPIOA, 11U)
-#define LINE_USB_DP                 PAL_LINE(GPIOA, 12U)
-#define LINE_SWDIO                  PAL_LINE(GPIOA, 13U)
-#define LINE_SWCLK                  PAL_LINE(GPIOA, 14U)
+#define GPIO_RF_CS                  PAL_LINE(GPIOA, 4U)
+#define GPIO_RF_SCK                 PAL_LINE(GPIOA, 5U)
+#define GPIO_RF_MISO                PAL_LINE(GPIOA, 6U)
+#define GPIO_RF_MOSI                PAL_LINE(GPIOA, 7U)
+#define GPIO_RF_MCO                 PAL_LINE(GPIOA, 8U)
+#define GPIO_USB_DM                 PAL_LINE(GPIOA, 11U)
+#define GPIO_USB_DP                 PAL_LINE(GPIOA, 12U)
+#define GPIO_SWDIO                  PAL_LINE(GPIOA, 13U)
+#define GPIO_SWCLK                  PAL_LINE(GPIOA, 14U)
 
-#define LINE_RF_PDN                 PAL_LINE(GPIOB, 0U)
-#define LINE_RF_RST                 PAL_LINE(GPIOB, 1U)
-#define LINE_RF_GPIO0               PAL_LINE(GPIOB, 8U)
-#define LINE_RF_GPIO1               PAL_LINE(GPIOB, 9U)
-#define LINE_LED_RX                 PAL_LINE(GPIOB, 10U)
-#define LINE_LED_TX                 PAL_LINE(GPIOB, 11U)
-#define LINE_RF_GPIO5               PAL_LINE(GPIOB, 12U)
-#define LINE_RF_GPIO4               PAL_LINE(GPIOB, 13U)
-#define LINE_RF_GPIO3               PAL_LINE(GPIOB, 14U)
-#define LINE_RF_GPIO2               PAL_LINE(GPIOB, 15U)
+#define GPIO_RF_PDN                 PAL_LINE(GPIOB, 0U)
+#define GPIO_RF_RST                 PAL_LINE(GPIOB, 1U)
+#define GPIO_RF_GPIO0               PAL_LINE(GPIOB, 8U)
+#define GPIO_RF_GPIO1               PAL_LINE(GPIOB, 9U)
+#define GPIO_LED_RX                 PAL_LINE(GPIOB, 10U)
+#define GPIO_LED_TX                 PAL_LINE(GPIOB, 11U)
+#define GPIO_RF_GPIO5               PAL_LINE(GPIOB, 12U)
+#define GPIO_RF_GPIO4               PAL_LINE(GPIOB, 13U)
+#define GPIO_RF_GPIO3               PAL_LINE(GPIOB, 14U)
+#define GPIO_RF_GPIO2               PAL_LINE(GPIOB, 15U)
 
-#define LINE_OSC32_IN               PAL_LINE(GPIOC, 14U)
-#define LINE_OSC32_OUT              PAL_LINE(GPIOC, 15U)
+#define GPIO_OSC32_IN               PAL_LINE(GPIOC, 14U)
+#define GPIO_OSC32_OUT              PAL_LINE(GPIOC, 15U)
 
-
-
-#define LINE_OSC_IN                 PAL_LINE(GPIOF, 0U)
-#define LINE_OSC_OUT                PAL_LINE(GPIOF, 1U)
+#define GPIO_OSC_IN                 PAL_LINE(GPIOF, 0U)
+#define GPIO_OSC_OUT                PAL_LINE(GPIOF, 1U)
 
 /*
  * I/O ports initial setup, this configuration is established soon after reset

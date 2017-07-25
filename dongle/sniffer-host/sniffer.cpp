@@ -2,6 +2,12 @@
 #include <fstream>
 
 extern "C" {
+#include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <termios.h>
+#include <errno.h>
+#include <string.h>
 #include "../sniffer/sniffer.h"
 }
 
@@ -26,10 +32,20 @@ static bool running = false;
 
 int sniff(const std::string& device, const std::string& pcapFile)
 {
-    std::ifstream ins(device, std::ios_base::binary);
+    int inf = open(device.c_str(), O_RDONLY);
 
-    if (!ins.is_open())
+    if (inf == -1)
+    {
+        std::cerr << "Cannot open " << device << ": " << strerror(errno) << std::endl;
         return -1;
+    }
+
+    struct termios options;
+    tcgetattr(inf, &options);
+    options.c_iflag &= ~(INLCR | IGNCR | ICRNL | IXON | IXOFF);
+    options.c_oflag &= ~(ONLCR | OCRNL);
+    options.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
+    tcsetattr(inf, TCSANOW, &options);
 
     std::ofstream outf;
     std::ostream *outs = &std::cout;
@@ -51,7 +67,7 @@ int sniff(const std::string& device, const std::string& pcapFile)
     pcapHeader.snaplen = 0xFFFF;
     pcapHeader.network = 0xC3;
 
-    outf.write((char*)&pcapHeader, sizeof(pcap_hdr_t));
+    outs->write((char*)&pcapHeader, sizeof(pcap_hdr_t));
 
     running = true;
 
@@ -61,28 +77,31 @@ int sniff(const std::string& device, const std::string& pcapFile)
 
         while ((h.magic != SNIFFER_MAGIC) && running)
         {
-            uint8_t byte = ins.peek();
+            int status = read(inf, (uint8_t*)&h.magic, 1);
+
+            if (status != 1)
+                break;
+
+            uint8_t byte = *((uint8_t*)&h.magic);
             if (byte != ((SNIFFER_MAGIC) & 0xFF))
             {
                 std::cerr << "Wrong magic" << std::endl;
-                ins.read((char*)&byte, 1);
                 continue;
             }
-
-            ins.read((char*)&h.magic, 4);
+            read(inf, ((uint8_t*)&h.magic) + 1, 3);
         }
 
         if (!running)
             break;
 
-        ins.read((char*)&h.size, 4);
-        ins.read((char*)&h.ts, 8);
+        read(inf, &h.size, 4);
+        read(inf, &h.ts, 8);
 
         if (h.size > 127)
             continue;
 
         uint8_t packet[127];
-        ins.read((char*)packet, h.size);
+        read(inf, packet, h.size);
 
         pcaprec_hdr_s rec;
 
@@ -94,14 +113,19 @@ int sniff(const std::string& device, const std::string& pcapFile)
         outs->write((char*)&rec, sizeof(pcaprec_hdr_s));
         outs->write((char*)packet, h.size);
         outs->flush();
-
-        //std::cout << "Packet: " << h.size << " " << h.ts << std::endl;
     }
+
+    close(inf);
 
     return 0;
 }
 
 int main(int argc, char **argv)
 {
-    return sniff(argv[1], argv[2]);
+    if ((argc != 3) && (argc != 2))
+    {
+        std::cout << "Usage: openlowpan-sniffer device [pcapfile]" << std::endl;
+        return 0;
+    }
+    return sniff(argv[1], (argc == 3) ? argv[2] : std::string());
 }

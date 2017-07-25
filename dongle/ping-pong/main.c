@@ -9,7 +9,7 @@
 #define PING_PONG_PAN_ID        0xDEAD
 #define PING_PONG_DEVICE_ID     0xBEEF
 
-static void frameIRQ(EXTDriver *extp, expchannel_t channel);
+static void rxIRQ(EXTDriver *extp, expchannel_t channel);
 
 static const EXTConfig extcfg = {
     {
@@ -21,7 +21,7 @@ static const EXTConfig extcfg = {
         {EXT_CH_MODE_DISABLED, NULL},
         {EXT_CH_MODE_DISABLED, NULL},
         {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_FALLING_EDGE | EXT_CH_MODE_AUTOSTART | EXT_MODE_GPIOB, rxIRQ},
+        {EXT_CH_MODE_DISABLED, NULL},
         {EXT_CH_MODE_FALLING_EDGE | EXT_CH_MODE_AUTOSTART | EXT_MODE_GPIOB, rxIRQ},
         {EXT_CH_MODE_DISABLED, NULL},
         {EXT_CH_MODE_DISABLED, NULL},
@@ -75,7 +75,7 @@ static THD_FUNCTION(trxThread, arg)
 {
     while (true)
     {
-        palSetLine(LINE_LED_TX);
+        palSetLine(GPIO_LED_TX);
 
         txHeader.sequenceNumber = 0;
         txHeader.frameType = MAC802145_FRAME_TYPE_DATA;
@@ -94,7 +94,7 @@ static THD_FUNCTION(trxThread, arg)
 
         chThdSleepMilliseconds(100);
 
-        palClearLine(LINE_LED_TX);
+        palClearLine(GPIO_LED_TX);
 
         chSysLock();
         chThdEnqueueTimeoutS(&rxWaitQueue, S2ST(5));
@@ -104,13 +104,13 @@ static THD_FUNCTION(trxThread, arg)
         uint8_t rxFIFOCount = cc2520ReadReg(&CC2520D, CC2520_REG_RXFIFOCNT);
         if (rxFIFOCount)
         {
-            palSetLine(LINE_LED_RX);
+            palSetLine(GPIO_LED_RX);
             cc2520ReadRxPacket(&CC2520D, &rxHeader, 128, rxbuf);
         }
         cc2520FlushRx(&CC2520D);
 
         chThdSleepMilliseconds(100);
-        palClearLine(LINE_LED_RX);
+        palClearLine(GPIO_LED_RX);
     }
 }
 
