@@ -1,4 +1,4 @@
-#include "mac802.14.5.h"
+#include "mac802.15.4.h"
 
 static inline void pack16(uint16_t v, uint8_t *p)
 {
@@ -31,79 +31,79 @@ static inline uint64_t unpack64(uint8_t *p)
            ((uint64_t)p[6] << 48) | ((uint64_t)p[7] << 56);
 }
 
-void mac802145PackHeader(const MAC802145FrameHeader *header, uint8_t *packed)
+void mac802154PackHeader(const MAC802154FrameHeader *header, uint8_t *packed)
 {
     uint8_t *p = packed;
     *p = header->frameSize; p++;
     pack16(header->frameControl, p); p += 2;
     *p = header->sequenceNumber; p++;
 
-    if (header->dstAddressMode != MAC802145_ADDRESS_NOT_PRESENT)
+    if (header->dstAddressMode != MAC802154_ADDRESS_NOT_PRESENT)
     {
         pack16(header->dstAddress.panID, p); p += 2;
     }
 
-    if (header->dstAddressMode == MAC802145_ADDRESS_SHORT)
+    if (header->dstAddressMode == MAC802154_ADDRESS_SHORT)
     {
         pack16(header->dstAddress.shortAddress, p); p += 2;
     }
-    else if (header->dstAddressMode == MAC802145_ADDRESS_EXTENDED)
+    else if (header->dstAddressMode == MAC802154_ADDRESS_EXTENDED)
     {
         pack64(header->dstAddress.extendedAddress, p); p += 8;
     }
 
-    if ((header->srcAddressMode != MAC802145_ADDRESS_NOT_PRESENT) &&
-            (!header->panIDCompressed || (header->dstAddressMode == MAC802145_ADDRESS_NOT_PRESENT)))
+    if ((header->srcAddressMode != MAC802154_ADDRESS_NOT_PRESENT) &&
+            (!header->panIDCompressed || (header->dstAddressMode == MAC802154_ADDRESS_NOT_PRESENT)))
     {
         pack16(header->srcAddress.panID, p); p += 2;
     }
-    if (header->srcAddressMode == MAC802145_ADDRESS_SHORT)
+    if (header->srcAddressMode == MAC802154_ADDRESS_SHORT)
     {
         pack16(header->srcAddress.shortAddress, p); p += 2;
     }
-    else if (header->srcAddressMode == MAC802145_ADDRESS_EXTENDED)
+    else if (header->srcAddressMode == MAC802154_ADDRESS_EXTENDED)
     {
         pack64(header->srcAddress.extendedAddress, p); p += 8;
     }
 }
 
-void mac802145UnpackHeader(const uint8_t *packed, MAC802145FrameHeader *header)
+void mac802154UnpackHeader(const uint8_t *packed, MAC802154FrameHeader *header)
 {
     uint8_t *p = (uint8_t*)packed;
     header->frameSize = *p; p++;
     header->frameControl = unpack16(p); p += 2;
     header->sequenceNumber = *p; p++;
 
-    if (header->dstAddressMode != MAC802145_ADDRESS_NOT_PRESENT)
+    if (header->dstAddressMode != MAC802154_ADDRESS_NOT_PRESENT)
     {
         header->dstAddress.panID = unpack16(p); p += 2;
     }
 
-    if (header->dstAddressMode == MAC802145_ADDRESS_SHORT)
+    if (header->dstAddressMode == MAC802154_ADDRESS_SHORT)
     {
         header->dstAddress.shortAddress = unpack16(p); p += 2;
     }
-    else if (header->dstAddressMode == MAC802145_ADDRESS_EXTENDED)
+    else if (header->dstAddressMode == MAC802154_ADDRESS_EXTENDED)
     {
         header->dstAddress.extendedAddress = unpack64(p); p += 8;
     }
 
-    if ((header->srcAddressMode != MAC802145_ADDRESS_NOT_PRESENT) &&
-            (!header->panIDCompressed || (header->dstAddressMode == MAC802145_ADDRESS_NOT_PRESENT)))
+    if ((header->srcAddressMode != MAC802154_ADDRESS_NOT_PRESENT) &&
+            (!header->panIDCompressed || (header->dstAddressMode == MAC802154_ADDRESS_NOT_PRESENT)))
     {
         header->srcAddress.panID = unpack16(p); p += 2;
     }
-    if (header->srcAddressMode == MAC802145_ADDRESS_SHORT)
+    if (header->srcAddressMode == MAC802154_ADDRESS_SHORT)
     {
         header->srcAddress.shortAddress = unpack16(p); p += 2;
     }
-    else if (header->srcAddressMode == MAC802145_ADDRESS_EXTENDED)
+    else if (header->srcAddressMode == MAC802154_ADDRESS_EXTENDED)
     {
         header->srcAddress.extendedAddress = unpack64(p); p += 8;
     }
 }
 
-uint8_t mac802145HeaderSize(const MAC802145FrameHeader *header)
+uint8_t mac802154HeaderSize(const MAC802154FrameHeader *header)
 {
     uint8_t size = 4;
 

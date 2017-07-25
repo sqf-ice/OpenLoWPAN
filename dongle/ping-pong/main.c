@@ -4,7 +4,7 @@
 #include <string.h>
 
 #include "cc2520.h"
-#include "mac802.14.5.h"
+#include "mac802.15.4.h"
 
 #define PING_PONG_PAN_ID        0xDEAD
 #define PING_PONG_DEVICE_ID     0xBEEF
@@ -51,8 +51,8 @@ static const CC2520Config cccfg = {
     &SPID1
 };
 
-static MAC802145Address address;
-static MAC802145FrameHeader txHeader, rxHeader;
+static MAC802154Address address;
+static MAC802154FrameHeader txHeader, rxHeader;
 
 static const char *text = "PINGPONG";
 uint8_t rxbuf[128];
@@ -78,14 +78,14 @@ static THD_FUNCTION(trxThread, arg)
         palSetLine(GPIO_LED_TX);
 
         txHeader.sequenceNumber = 0;
-        txHeader.frameType = MAC802145_FRAME_TYPE_DATA;
+        txHeader.frameType = MAC802154_FRAME_TYPE_DATA;
         txHeader.securityEnabled = false;
         txHeader.framePending = false;
         txHeader.ackRequest = false;
         txHeader.panIDCompressed = false;
-        txHeader.srcAddressMode = MAC802145_ADDRESS_NOT_PRESENT;
-        txHeader.frameVersion = MAC802145_FRAME_VERSION;
-        txHeader.dstAddressMode = MAC802145_ADDRESS_SHORT;
+        txHeader.srcAddressMode = MAC802154_ADDRESS_NOT_PRESENT;
+        txHeader.frameVersion = MAC802154_FRAME_VERSION;
+        txHeader.dstAddressMode = MAC802154_ADDRESS_SHORT;
         txHeader.dstAddress = address;
 
         cc2520FlushTx(&CC2520D);

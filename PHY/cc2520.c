@@ -109,11 +109,11 @@ void cc2520WriteTxFIFO(CC2520Driver *ccp, uint8_t n, const uint8_t *data)
     spiUnselect(ccp->config->spi);
 }
 
-void cc2520WriteTxPacket(CC2520Driver *ccp, const MAC802145FrameHeader* h, uint8_t n, const uint8_t *data)
+void cc2520WriteTxPacket(CC2520Driver *ccp, const MAC802154FrameHeader* h, uint8_t n, const uint8_t *data)
 {
-    uint8_t header[MAC802145_MAX_HEADER_SIZE];
-    uint8_t headerSize = mac802145HeaderSize(h);
-    mac802145PackHeader(h, header);
+    uint8_t header[MAC802154_MAX_HEADER_SIZE];
+    uint8_t headerSize = mac802154HeaderSize(h);
+    mac802154PackHeader(h, header);
     header[0] = headerSize - 1 + n + 2;
 
     spiSelect(ccp->config->spi);
@@ -131,9 +131,9 @@ void cc2520ReadRxFIFO(CC2520Driver *ccp, uint8_t n, uint8_t *data)
     spiUnselect(ccp->config->spi);
 }
 
-void cc2520ReadRxPacket(CC2520Driver *ccp, MAC802145FrameHeader* h, uint8_t maxn, uint8_t *data)
+void cc2520ReadRxPacket(CC2520Driver *ccp, MAC802154FrameHeader* h, uint8_t maxn, uint8_t *data)
 {
-    uint8_t hdata[MAC802145_MAX_HEADER_SIZE];
+    uint8_t hdata[MAC802154_MAX_HEADER_SIZE];
     uint8_t headerSize, dataSize;
     uint16_t dataOk;
 
@@ -143,7 +143,7 @@ void cc2520ReadRxPacket(CC2520Driver *ccp, MAC802145FrameHeader* h, uint8_t maxn
 
     h->frameSize = hdata[0];
     h->frameControl = hdata[1] | (hdata[2] << 8);
-    headerSize = mac802145HeaderSize(h);
+    headerSize = mac802154HeaderSize(h);
     dataSize = h->frameSize + 1 - headerSize - 2;
 
     if (dataSize > maxn)
@@ -155,7 +155,7 @@ void cc2520ReadRxPacket(CC2520Driver *ccp, MAC802145FrameHeader* h, uint8_t maxn
 
     spiUnselect(ccp->config->spi);
 
-    mac802145UnpackHeader(hdata, h);
+    mac802154UnpackHeader(hdata, h);
 }
 
 void cc2520FrameFilterSetup(CC2520Driver *ccp, bool enabled, bool coordinator)
@@ -179,7 +179,7 @@ void cc2520FrameFilterTypes(CC2520Driver *ccp, uint8_t types, bool accept)
     cc2520WriteReg(ccp, CC2520_REG_FRMFILT1, filt);
 }
 
-void cc2520FrameFilterAddAddress(CC2520Driver *ccp, uint8_t id, bool extended, const MAC802145Address *address)
+void cc2520FrameFilterAddAddress(CC2520Driver *ccp, uint8_t id, bool extended, const MAC802154Address *address)
 {
     uint8_t enableRegAddr = (extended ? CC2520_REG_SRCEXTEN0 : CC2520_REG_SRCSHORTEN0) + id / 8;
 
@@ -222,7 +222,7 @@ void cc2520FrameFilterRemoveAddress(CC2520Driver *ccp, uint8_t id, bool extended
     cc2520WriteReg(ccp, enableRegAddr, enableReg);
 }
 
-void cc2520FrameFilterSetLocalAddress(CC2520Driver *ccp, bool extended, const MAC802145Address *address)
+void cc2520FrameFilterSetLocalAddress(CC2520Driver *ccp, bool extended, const MAC802154Address *address)
 {
     uint16_t filtAddress = extended ? (CC2520_MEM_LOCAL_ADDRESS_INFO) : (CC2520_MEM_LOCAL_ADDRESS_INFO + 8);
     uint8_t memData[8];

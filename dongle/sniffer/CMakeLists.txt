@@ -25,7 +25,6 @@ SET(STM32_LINKER_SCRIPT ${ChibiOS_LINKER_SCRIPT})
 SET(HEADER_FILES
     ../../PHY/cc2520_reg.h
     ../../PHY/cc2520.h
-    ../../6LoWPAN/mac802.14.5.h
     chconf.h
     halconf.h
     mcuconf.h
@@ -35,7 +34,6 @@ SET(HEADER_FILES
 
 SET(SOURCE_FILES 
     ../../PHY/cc2520.c
-    ../../6LoWPAN/mac802.14.5.c
     ../board/board.c
     main.c 
     usb.c

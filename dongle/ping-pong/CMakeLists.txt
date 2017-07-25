@@ -25,7 +25,7 @@ SET(STM32_LINKER_SCRIPT ${ChibiOS_LINKER_SCRIPT})
 SET(HEADER_FILES
     ${CMAKE_SOURCE_DIR}/../../PHY/cc2520_reg.h
     ${CMAKE_SOURCE_DIR}/../../PHY/cc2520.h
-    ${CMAKE_SOURCE_DIR}/../../6LoWPAN/mac802.14.5.h
+    ${CMAKE_SOURCE_DIR}/../../6LoWPAN/mac802.15.4.h
     chconf.h
     halconf.h
     mcuconf.h
@@ -33,7 +33,7 @@ SET(HEADER_FILES
 
 SET(SOURCE_FILES 
     ${CMAKE_SOURCE_DIR}/../../PHY/cc2520.c
-    ${CMAKE_SOURCE_DIR}/../../6LoWPAN/mac802.14.5.c
+    ${CMAKE_SOURCE_DIR}/../../6LoWPAN/mac802.15.4.c
     ${CMAKE_SOURCE_DIR}/../board/board.c
     main.c 
 )
