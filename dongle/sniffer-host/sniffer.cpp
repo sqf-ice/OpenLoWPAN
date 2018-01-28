@@ -96,6 +96,8 @@ int sniff(const std::string& device, const std::string& pcapFile)
 
         read(inf, &h.size, 4);
         read(inf, &h.ts, 8);
+        
+        std::cerr << "Packet detected: " << h.size << std::endl;
 
         if (h.size > 127)
             continue;

@@ -1,9 +1,29 @@
 #include "cc2520.h"
 
+static void initPIB(MAC802154PHYPIB *pib)
+{
+    pib->phyCurrentChannel = 0;
+    pib->phyTXPowerTolerance = 1;
+    pib->phyTXPower = 0;
+    pib->phyCCAMode = 1;
+    pib->phyCurrentPage = 0;
+    pib->phySymbolsPerOctet = 2;
+    pib->phySHRDuration = 10;
+    pib->phyMaxFrameDuration = pib->phySHRDuration + 128 * 2;
+}
+
+static MAC802154PHYPIB* pib(MAC802154PHYDriverVMT *phy)
+{
+    return &((CC2520Driver*)phy)->pib;
+}
 
 void cc2520Start(CC2520Driver *ccp, const CC2520Config *config)
 {
     ccp->config = config;
+
+    initPIB(&ccp->pib);
+
+    ccp->vmt.pib = &pib;
 
     //Startup sequence from datasheet
     cc2520WriteReg(ccp, CC2520_REG_TXPOWER,     0x32);

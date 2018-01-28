@@ -126,3 +126,48 @@ uint8_t mac802154HeaderSize(const MAC802154FrameHeader *header)
 
     return size;
 }
+
+static void mac802154InitPIB(MAC802154PIB *pib, const MAC802154PHYPIB *ppib, uint64_t extAddress)
+{
+    pib->macExtendedAddress = extAddress;
+    pib->macAckWaitDuration = 20 + 12 + ppib->phySHRDuration + (6 * ppib->phySymbolsPerOctet);
+    pib->macAssociatedPANCoord = false;
+    pib->macAutoRequest = true;
+    pib->macBattLifeExt = false;
+    pib->macBattLifeExtPeriods = 6;
+    pib->macCoordExtendedAddress = 0xFFFFFFFFFFFFFFFFULL;
+    pib->macCoordShortAddress = 0xFFFF;
+    pib->macDSN = 0;
+    pib->macMaxBE = 5;
+    pib->macMaxCSMABackoffs = 4;
+    pib->macMaxFrameRetries = 3;
+    pib->macMinBE = 3;
+    //pib->macLIFSPeriod =
+    //pib->macSIFSPeriod =
+    pib->macPANId = 0xFFFF;
+    pib->macRangingSupported = false;
+    pib->macResponseWaitTime = 32;
+    pib->macRxOnWhenIdle = false;
+    pib->macSecurityEnabled = false;
+    pib->macShortAddress = 0xFFFF;
+    pib->macSyncSymbolOffset = 0;
+    pib->macTimestampSupported = false;
+    pib->macTxControlActiveDuration = 2000;
+    pib->macTxControlPauseDuration = 2000;
+    pib->macTxTotalDuration = 0;
+
+    int m = pib->macMaxBE - pib->macMinBE;
+    m = pib->macMaxCSMABackoffs < m ? pib->macMaxCSMABackoffs : m;
+    int r = 0;
+    for (int i = 0; i < m; i++)
+        r += 1 << (pib->macMinBE + i);
+    r += ((1 << pib->macMinBE) - 1) * pib->macMaxCSMABackoffs;
+
+    pib->macMaxFrameTotalWaitTime = r * 20 + ppib->phyMaxFrameDuration;
+}
+
+void mac802154Start(MAC802154Driver *macp, const MAC802154Config *config)
+{
+    macp->cfg = config;
+    mac802154InitPIB(&macp->pib, config->phy->pib(config->phy), config->extendedAddress);
+}

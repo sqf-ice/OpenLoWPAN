@@ -12,8 +12,11 @@ typedef struct
 
 typedef struct 
 {
+    MAC802154PHYDriverVMT vmt;
+
     const CC2520Config *config;
     uint8_t state;
+    MAC802154PHYPIB pib;
 } CC2520Driver;
 
 void cc2520Start(CC2520Driver *ccp, const CC2520Config *config);

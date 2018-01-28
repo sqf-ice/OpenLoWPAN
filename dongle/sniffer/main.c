@@ -159,8 +159,8 @@ static THD_FUNCTION(sniffer, arg)
 
                 if (SDU1.state == SDU_READY)
                 {
-                    chnWrite(&SDU1, (uint8_t*)&snifferHeader, sizeof(SnifferHeader));
-                    chnWrite(&SDU1, buf + 1, size);
+                    chnWriteTimeout(&SDU1, (uint8_t*)&snifferHeader, sizeof(SnifferHeader), MS2ST(10));
+                    chnWriteTimeout(&SDU1, buf + 1, size, MS2ST(10));
                 }
             }
             exceptions = cc2520GetExceptions(&CC2520D);
