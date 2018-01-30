@@ -2,7 +2,7 @@
 
 static void initPIB(MAC802154PHYPIB *pib)
 {
-    pib->phyCurrentChannel = 0;
+    pib->phyCurrentChannel = 11;
     pib->phyTXPowerTolerance = 1;
     pib->phyTXPower = 0;
     pib->phyCCAMode = 1;
@@ -17,6 +17,82 @@ static MAC802154PHYPIB* pib(MAC802154PHYDriverVMT *phy)
     return &((CC2520Driver*)phy)->pib;
 }
 
+
+static int set(MAC802154PHYDriverVMT *phy, MAC802154PHYParameter param, void *data)
+{
+    int result = -1;
+    CC2520Driver *ccp = ((CC2520Driver*)phy);
+
+    switch (param)
+    {
+    case MAC802154_PHY_CURRENT_CHANNEL:
+        {
+            uint8_t channel = *((uint8_t*)data);
+            if ((channel < 11) || (channel > 26))
+                return -1;
+
+            cc2520WriteReg(ccp, CC2520_REG_FREQCTRL, 11 + 5 * (channel - 11));
+            ccp->pib.phyCurrentChannel = *((uint8_t*)data);
+
+            return 0;
+        }
+
+    case MAC802154_PHY_TX_POWER:
+        // TODO: Set actual power
+        ccp->pib.phyTXPower = *((int8_t*)data);
+        return 0;
+
+    default:
+        result = -1;
+    }
+    return result;
+}
+
+static int get(MAC802154PHYDriverVMT *phy, MAC802154PHYParameter param, void *data)
+{
+    int result = -1;
+    CC2520Driver *ccp = ((CC2520Driver*)phy);
+
+    switch (param)
+    {
+    case MAC802154_PHY_CURRENT_CHANNEL:
+        *((uint8_t*)data) = ccp->pib.phyCurrentChannel;
+        return 0;
+
+    case MAC802154_PHY_TX_POWER_TOLERANCE:
+        *((uint8_t*)data) = ccp->pib.phyTXPowerTolerance;
+        return 0;
+
+    case MAC802154_PHY_TX_POWER:
+        *((int8_t*)data) = ccp->pib.phyTXPower;
+        return 0;
+
+    case MAC802154_PHY_CCA_MODE:
+        *((uint8_t*)data) = ccp->pib.phyCCAMode;
+        return 0;
+
+    case MAC802154_PHY_CURRENT_PAGE:
+        *((uint8_t*)data) = ccp->pib.phyCurrentPage;
+        return 0;
+
+    case MAC802154_PHY_MAX_FRAME_DURATION:
+        *((uint16_t*)data) = ccp->pib.phyMaxFrameDuration;
+        return 0;
+
+    case MAC802154_PHY_SHR_DURATION:
+        *((uint16_t*)data) = ccp->pib.phySHRDuration;
+        return 0;
+
+    case MAC802154_PHY_SYMBOLS_PER_OCTET:
+        *((uint8_t*)data) = ccp->pib.phySymbolsPerOctet;
+        return 0;
+
+    default:
+        result = -1;
+    }
+    return result;
+}
+
 void cc2520Start(CC2520Driver *ccp, const CC2520Config *config)
 {
     ccp->config = config;
@@ -24,6 +100,8 @@ void cc2520Start(CC2520Driver *ccp, const CC2520Config *config)
     initPIB(&ccp->pib);
 
     ccp->vmt.pib = &pib;
+    ccp->vmt.get = &get;
+    ccp->vmt.set = &set;
 
     //Startup sequence from datasheet
     cc2520WriteReg(ccp, CC2520_REG_TXPOWER,     0x32);

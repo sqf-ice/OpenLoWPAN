@@ -34,7 +34,6 @@ static MAC802154FrameHeader txHeader;
 
 static const char *text = "Test 802.15.4 packet! Hello there!";
 
-
 static THD_WORKING_AREA(txWorkingArea, 256);
 static THD_FUNCTION(txThread, arg)
 {
