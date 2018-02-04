@@ -25,6 +25,8 @@
 // FIXME: Security headers not included
 #define MAC802154_MAX_HEADER_SIZE               24
 
+#define MAC802154_MAX_CHANNELS                  16
+
 #define MAC802154_FRAME_VERSION                 1
 
 typedef enum {MAC802154_FRAME_TYPE_BEACON = 0, MAC802154_FRAME_TYPE_DATA = 1,
@@ -144,6 +146,22 @@ typedef enum {
     MAC802154_PHY_SYMBOLS_PER_OCTET
 } MAC802154PHYParameter;
 
+typedef enum {
+    MAC802154_SCAN_ED, MAC802154_SCAN_ACTIVE, MAC802154_SCAN_PASSIVE,
+    MAC802154_SCAN_ORPHAN
+} MAC802154ScanType;
+
+typedef enum {
+    MAC802154_SCAN_SUCCESS, MAC802154_SCAN_LIMIT_REACHED, MAC802154_SCAN_NO_BEACON,
+    MAC802154_SCAN_IN_PROGRESS, MAC802154_SCAN_COUNTER_ERROR, MAC802154_SCAN_FRAME_TOO_LONG,
+    MAC802154_SCAN_UNAVAILABLE_KEY, MAC802154_SCAN_UNSUPPORTED_SECURITY,
+    MAC802154_SCAN_INVALID_PARAMETER
+} MAC802154ScanStatus;
+
+typedef enum {
+    MAC802154_S_READY, MAC802154_S_SCAN
+} MAC802154State;
+
 // Reduced PIB...
 typedef struct
 {
@@ -155,29 +173,54 @@ typedef struct
     uint16_t    phyMaxFrameDuration;
     uint16_t    phySHRDuration;
     uint8_t     phySymbolsPerOctet;
+    uint8_t     phySymbolTime;
 } MAC802154PHYPIB;
 
 struct _MAC802154PHYDriverVMT;
 typedef struct _MAC802154PHYDriverVMT MAC802154PHYDriverVMT;
 
+struct _MAC802154Driver;
+typedef struct _MAC802154Driver MAC802154Driver;
+
 typedef struct
 {
     MAC802154PHYDriverVMT *phy;
     uint64_t extendedAddress;
+    void (*macMLMEScanConfirm)(MAC802154Driver *macp, MAC802154ScanStatus status,
+                               MAC802154ScanType type, int size, const uint8_t *energies);
 } MAC802154Config;
 
-typedef struct
+typedef struct _MAC802154Driver
 {
     const MAC802154Config *cfg;
     MAC802154PIB pib;
+    MAC802154State state;
+    int stateTimeUS;
+    union {
+        struct {
+            uint8_t scanChannels[MAC802154_MAX_CHANNELS];
+            uint8_t scanEnergies[MAC802154_MAX_CHANNELS];
+            int8_t  scanCurrent;
+            uint8_t scanCount;
+            uint8_t scanPage;
+            uint8_t scanDuration;
+            MAC802154ScanType scanType;
+        };
+    } ctx;
 } MAC802154Driver;
 
 typedef struct _MAC802154PHYDriverVMT
 {
     MAC802154PHYPIB* (*pib)(MAC802154PHYDriverVMT *phy);
-    int (*set)(MAC802154PHYDriverVMT *phy, MAC802154PHYParameter param, void *data);
-    int (*get)(MAC802154PHYDriverVMT *phy, MAC802154PHYParameter param, void *data);
+    int (*set)(MAC802154Driver *macp, MAC802154PHYParameter param, void *data);
+    int (*get)(MAC802154Driver *macp, MAC802154PHYParameter param, void *data);
+
+    void (*toggleRX)(MAC802154Driver *macp, bool on);
+
+    void (*toggleEnergyScan)(MAC802154Driver *macp, bool on);
+    uint8_t (*getEnergy)(MAC802154Driver *macp);
 } MAC802154PHYDriverVMT;
+
 
 //#pragma pack(pop)
 
@@ -188,5 +231,9 @@ void mac802154UnpackHeader(const uint8_t *packed, MAC802154FrameHeader *header);
 uint8_t mac802154HeaderSize(const MAC802154FrameHeader *header);
 
 void mac802154Start(MAC802154Driver *macp, const MAC802154Config *config);
+
+void mac802154Time(MAC802154Driver *macp, int deltaUS);
+void mac802154MLMEScanRequest(MAC802154Driver *macp, MAC802154ScanType type, int *channels,
+                              int duration, int channelPage);
 
 #endif

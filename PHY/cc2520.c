@@ -10,6 +10,7 @@ static void initPIB(MAC802154PHYPIB *pib)
     pib->phySymbolsPerOctet = 2;
     pib->phySHRDuration = 10;
     pib->phyMaxFrameDuration = pib->phySHRDuration + 128 * 2;
+    pib->phySymbolTime = 16;
 }
 
 static MAC802154PHYPIB* pib(MAC802154PHYDriverVMT *phy)
@@ -17,11 +18,50 @@ static MAC802154PHYPIB* pib(MAC802154PHYDriverVMT *phy)
     return &((CC2520Driver*)phy)->pib;
 }
 
+static void toggleRX(MAC802154Driver *macp, bool on)
+{
+    CC2520Driver *ccp = ((CC2520Driver*)macp->cfg->phy);
+    if (on)
+        cc2520RxOn(ccp);
+    else
+        cc2520TRxOff(ccp);
+}
 
-static int set(MAC802154PHYDriverVMT *phy, MAC802154PHYParameter param, void *data)
+static uint8_t getEnergy(MAC802154Driver *macp)
+{
+    CC2520Driver *ccp = ((CC2520Driver*)macp->cfg->phy);
+    uint8_t reg = cc2520ReadReg(ccp, CC2520_REG_RSSISTAT);
+    uint8_t res;
+
+    if (!(reg & 0x1))
+        res = 0xFF;
+    else
+    {
+        reg = cc2520ReadReg(ccp, CC2520_REG_RSSI);
+        res = (reg >= 0x80) ? -(*((int8_t*)&reg)) : reg;
+    }
+
+    return res;
+}
+
+static void toggleEnergyScan(MAC802154Driver *macp, bool on)
+{
+    CC2520Driver *ccp = ((CC2520Driver*)macp->cfg->phy);
+
+    uint8_t reg = cc2520ReadReg(ccp, CC2520_REG_FRMCTRL0);
+    if (on)
+        reg |= (1 << 4);
+    else
+        reg &= ~(1 << 4);
+
+    cc2520WriteReg(ccp, CC2520_REG_FRMCTRL0, reg);
+    toggleRX(macp, on);
+}
+
+static int set(MAC802154Driver *macp, MAC802154PHYParameter param, void *data)
 {
     int result = -1;
-    CC2520Driver *ccp = ((CC2520Driver*)phy);
+    CC2520Driver *ccp = ((CC2520Driver*)macp->cfg->phy);
 
     switch (param)
     {
@@ -48,10 +88,10 @@ static int set(MAC802154PHYDriverVMT *phy, MAC802154PHYParameter param, void *da
     return result;
 }
 
-static int get(MAC802154PHYDriverVMT *phy, MAC802154PHYParameter param, void *data)
+static int get(MAC802154Driver *macp, MAC802154PHYParameter param, void *data)
 {
     int result = -1;
-    CC2520Driver *ccp = ((CC2520Driver*)phy);
+    CC2520Driver *ccp = ((CC2520Driver*)macp->cfg->phy);
 
     switch (param)
     {
@@ -102,6 +142,9 @@ void cc2520Start(CC2520Driver *ccp, const CC2520Config *config)
     ccp->vmt.pib = &pib;
     ccp->vmt.get = &get;
     ccp->vmt.set = &set;
+    ccp->vmt.toggleRX = &toggleRX;
+    ccp->vmt.toggleEnergyScan = &toggleEnergyScan;
+    ccp->vmt.getEnergy = &getEnergy;
 
     //Startup sequence from datasheet
     cc2520WriteReg(ccp, CC2520_REG_TXPOWER,     0x32);
