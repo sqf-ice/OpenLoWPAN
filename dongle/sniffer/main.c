@@ -6,9 +6,9 @@
 #include "sniffer.h"
 
 static const SPIConfig spiConfig = {
+    FALSE,
     NULL,
-    GPIOA,
-    GPIOA_RF_CS,
+    GPIO_RF_CS,
     SPI_CR1_BR_1,
     SPI_CR2_DS_2 | SPI_CR2_DS_1 | SPI_CR2_DS_0
 };
@@ -19,36 +19,7 @@ static const CC2520Config cc2520Config = {
 
 CC2520Driver CC2520D;
 
-static void rxIRQ(EXTDriver *extp, expchannel_t channel);
 static void updateTimer(GPTDriver *gptp);
-
-static const EXTConfig extConfig = {
-    {
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_FALLING_EDGE | EXT_CH_MODE_AUTOSTART | EXT_MODE_GPIOB, rxIRQ},
-        {EXT_CH_MODE_FALLING_EDGE | EXT_CH_MODE_AUTOSTART | EXT_MODE_GPIOB, rxIRQ},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL}
-    }
-};
 
 static const GPTConfig timerConfig =
 {
@@ -68,11 +39,9 @@ static void updateTimer(GPTDriver *gptp)
     usTimer += gptGetIntervalX(gptp);
 }
 
-static void rxIRQ(EXTDriver *extp, expchannel_t channel)
+static void rxIRQ(void *arg)
 {
-    (void)extp;
-
-    if (channel == PAL_PAD(GPIO_RF_GPIO0))
+    if ((uint32_t)arg == GPIO_RF_GPIO0)
     {
         uint16_t timOffset = gptGetCounterX(&GPTD3);
         lastPacketTimestamp = usTimer + timOffset;
@@ -112,7 +81,11 @@ static THD_FUNCTION(sniffer, arg)
     gptStart(&GPTD3, &timerConfig);
     gptStartContinuous(&GPTD3, 1000 - 1);
 
-    extStart(&EXTD1, &extConfig);
+    palSetLineCallback(GPIO_RF_GPIO0, &rxIRQ, (void*)GPIO_RF_GPIO0);
+    palSetLineCallback(GPIO_RF_GPIO1, &rxIRQ, (void*)GPIO_RF_GPIO1);
+
+    palEnableLineEvent(GPIO_RF_GPIO0, PAL_EVENT_MODE_FALLING_EDGE);
+    palEnableLineEvent(GPIO_RF_GPIO1, PAL_EVENT_MODE_FALLING_EDGE);
 
     cc2520RxOn(&CC2520D);
 
@@ -121,7 +94,7 @@ static THD_FUNCTION(sniffer, arg)
     while (!chThdShouldTerminateX())
     {
         chSysLock();
-        chThdEnqueueTimeoutS(&rxQueue, MS2ST(100));
+        chThdEnqueueTimeoutS(&rxQueue, TIME_MS2I(100));
         chSysUnlock();
 
         if (chThdShouldTerminateX())
@@ -159,8 +132,8 @@ static THD_FUNCTION(sniffer, arg)
 
                 if (SDU1.state == SDU_READY)
                 {
-                    chnWriteTimeout(&SDU1, (uint8_t*)&snifferHeader, sizeof(SnifferHeader), MS2ST(10));
-                    chnWriteTimeout(&SDU1, buf + 1, size, MS2ST(10));
+                    chnWriteTimeout(&SDU1, (uint8_t*)&snifferHeader, sizeof(SnifferHeader), TIME_MS2I(10));
+                    chnWriteTimeout(&SDU1, buf + 1, size, TIME_MS2I(10));
                 }
             }
             exceptions = cc2520GetExceptions(&CC2520D);
@@ -170,9 +143,8 @@ static THD_FUNCTION(sniffer, arg)
 
     cc2520TRxOff(&CC2520D);
 
-    extChannelDisable(&EXTD1, 8);
-    extChannelDisable(&EXTD1, 9);
-    extStop(&EXTD1);
+    palDisableLineEvent(GPIO_RF_GPIO0);
+    palDisableLineEvent(GPIO_RF_GPIO1);
 
     palClearLine(GPIO_RF_RST);
     palClearLine(GPIO_RF_PDN);

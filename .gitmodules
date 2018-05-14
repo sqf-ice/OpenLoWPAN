@@ -1,7 +1,7 @@
 [submodule "ChibiOS"]
 	path = ChibiOS
 	url = https://github.com/ChibiOS/ChibiOS
-	branch = stable_17.6.x
+	branch = stable_18.2.x
 [submodule "stm32-cmake"]
 	path = stm32-cmake
 	url = https://github.com/ObKo/stm32-cmake

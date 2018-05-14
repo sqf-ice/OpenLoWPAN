@@ -9,40 +9,10 @@
 #define PING_PONG_PAN_ID        0xDEAD
 #define PING_PONG_DEVICE_ID     0xBEEF
 
-static void rxIRQ(EXTDriver *extp, expchannel_t channel);
-
-static const EXTConfig extcfg = {
-    {
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_FALLING_EDGE | EXT_CH_MODE_AUTOSTART | EXT_MODE_GPIOB, rxIRQ},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_DISABLED, NULL}
-    }
-};
-
 static const SPIConfig spicfg = {
+    FALSE,
     NULL,
-    GPIOA,
-    GPIOA_RF_CS,
+    GPIO_RF_CS,
     SPI_CR1_BR_1,
     SPI_CR2_DS_2 | SPI_CR2_DS_1 | SPI_CR2_DS_0
 };
@@ -62,10 +32,9 @@ CC2520Driver CC2520D;
 static _THREADS_QUEUE_DECL(rxWaitQueue);
 static THD_WORKING_AREA(trxWorkingArea, 256);
 
-static void rxIRQ(EXTDriver *extp, expchannel_t channel)
+static void rxIRQ(void *arg)
 {
-    (void)extp;
-    (void)channel;
+    (void)arg;
     chSysLockFromISR();
     chThdDequeueAllI(&rxWaitQueue, 0);
     chSysUnlockFromISR();
@@ -97,7 +66,7 @@ static THD_FUNCTION(trxThread, arg)
         palClearLine(GPIO_LED_TX);
 
         chSysLock();
-        chThdEnqueueTimeoutS(&rxWaitQueue, S2ST(5));
+        chThdEnqueueTimeoutS(&rxWaitQueue, TIME_S2I(5));
         chSysUnlock();
 
         cc2520WriteReg(&CC2520D, CC2520_REG_EXCFLAG1, 0x0);
@@ -119,8 +88,10 @@ int main(void)
     halInit();
     chSysInit();
 
-    extStart(&EXTD1, &extcfg);
     spiStart(&SPID1, &spicfg);
+
+    palSetLineCallback(GPIO_RF_GPIO1, &rxIRQ, NULL);
+    palEnableLineEvent(GPIO_RF_GPIO1, PAL_EVENT_MODE_FALLING_EDGE);
 
     address.panID = PING_PONG_PAN_ID;
     address.shortAddress = PING_PONG_DEVICE_ID;

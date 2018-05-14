@@ -8,14 +8,14 @@ PROJECT(dongle-sniffer)
 
 ENABLE_LANGUAGE(ASM)
 
-FIND_PACKAGE(ChibiOS 17 COMPONENTS rt hal gpt ext pal serial serial_usb spi st usb queues buffers REQUIRED)
+FIND_PACKAGE(ChibiOS 18 COMPONENTS rt hal REQUIRED)
 
 INCLUDE_DIRECTORIES(
     ${CMAKE_SOURCE_DIR}
     ${ChibiOS_INCLUDE_DIRS}
-    ../board
-    ../../6LoWPAN
-    ../../PHY
+    ${CMAKE_SOURCE_DIR}/../board
+    ${CMAKE_SOURCE_DIR}/../../6LoWPAN
+    ${CMAKE_SOURCE_DIR}/../../PHY
 )
 
 ADD_DEFINITIONS(-DCORTEX_USE_FPU=FALSE)
@@ -23,8 +23,9 @@ ADD_DEFINITIONS(-DCORTEX_USE_FPU=FALSE)
 SET(STM32_LINKER_SCRIPT ${ChibiOS_LINKER_SCRIPT})
 
 SET(HEADER_FILES
-    ../../PHY/cc2520_reg.h
-    ../../PHY/cc2520.h
+    ${CMAKE_SOURCE_DIR}/../../PHY/cc2520_reg.h
+    ${CMAKE_SOURCE_DIR}/../../PHY/cc2520.h
+    ${CMAKE_SOURCE_DIR}/../../6LoWPAN/mac802.15.4.h
     chconf.h
     halconf.h
     mcuconf.h
@@ -33,8 +34,9 @@ SET(HEADER_FILES
 )
 
 SET(SOURCE_FILES 
-    ../../PHY/cc2520.c
-    ../board/board.c
+    ${CMAKE_SOURCE_DIR}/../../PHY/cc2520.c
+    ${CMAKE_SOURCE_DIR}/../../6LoWPAN/mac802.15.4.c
+    ${CMAKE_SOURCE_DIR}/../board/board.c
     main.c 
     usb.c
 )

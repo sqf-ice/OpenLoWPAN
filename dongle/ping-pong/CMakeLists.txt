@@ -8,14 +8,14 @@ PROJECT(dongle-ping-pong)
 
 ENABLE_LANGUAGE(ASM)
 
-FIND_PACKAGE(ChibiOS 17 COMPONENTS rt hal ext pal spi st REQUIRED)
+FIND_PACKAGE(ChibiOS 18 COMPONENTS rt hal REQUIRED)
 
 INCLUDE_DIRECTORIES(
     ${CMAKE_SOURCE_DIR}
-    ${ChibiOS_INCLUDE_DIRS}
     ${CMAKE_SOURCE_DIR}/../board
     ${CMAKE_SOURCE_DIR}/../../6LoWPAN
     ${CMAKE_SOURCE_DIR}/../../PHY
+    ${ChibiOS_INCLUDE_DIRS}
 )
 
 ADD_DEFINITIONS(-DCORTEX_USE_FPU=FALSE)
@@ -26,14 +26,15 @@ SET(HEADER_FILES
     ${CMAKE_SOURCE_DIR}/../../PHY/cc2520_reg.h
     ${CMAKE_SOURCE_DIR}/../../PHY/cc2520.h
     ${CMAKE_SOURCE_DIR}/../../6LoWPAN/mac802.15.4.h
+    ${CMAKE_SOURCE_DIR}/../board/board.h
     chconf.h
     halconf.h
     mcuconf.h
 )
 
-SET(SOURCE_FILES 
-    ${CMAKE_SOURCE_DIR}/../../PHY/cc2520.c
+SET(SOURCE_FILES
     ${CMAKE_SOURCE_DIR}/../../6LoWPAN/mac802.15.4.c
+    ${CMAKE_SOURCE_DIR}/../../PHY/cc2520.c
     ${CMAKE_SOURCE_DIR}/../board/board.c
     main.c 
 )

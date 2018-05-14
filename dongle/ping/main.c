@@ -17,9 +17,9 @@ static void macScanConfirm(MAC802154Driver *macp, MAC802154ScanStatus status,
                            MAC802154PANDescriptor *pans);
 
 static const SPIConfig spicfg = {
+    FALSE,
     NULL,
-    GPIOA,
-    GPIOA_RF_CS,
+    GPIO_RF_CS,
     SPI_CR1_BR_1,
     SPI_CR2_DS_2 | SPI_CR2_DS_1 | SPI_CR2_DS_0
 };
