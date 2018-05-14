@@ -55,7 +55,16 @@ static void toggleEnergyScan(MAC802154Driver *macp, bool on)
         reg &= ~(1 << 4);
 
     cc2520WriteReg(ccp, CC2520_REG_FRMCTRL0, reg);
-    toggleRX(macp, on);
+}
+
+
+static void txPacket(MAC802154Driver *macp, const MAC802154FrameHeader* h,
+                     uint8_t n, const uint8_t *data)
+{
+    CC2520Driver *ccp = ((CC2520Driver*)macp->cfg->phy);
+
+    cc2520WriteTxPacket(ccp, h, n, data);
+    cc2520TxOn(ccp);
 }
 
 static int set(MAC802154Driver *macp, MAC802154PHYParameter param, void *data)
@@ -145,6 +154,7 @@ void cc2520Start(CC2520Driver *ccp, const CC2520Config *config)
     ccp->vmt.toggleRX = &toggleRX;
     ccp->vmt.toggleEnergyScan = &toggleEnergyScan;
     ccp->vmt.getEnergy = &getEnergy;
+    ccp->vmt.txPacket = &txPacket;
 
     //Startup sequence from datasheet
     cc2520WriteReg(ccp, CC2520_REG_TXPOWER,     0x32);

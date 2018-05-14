@@ -26,15 +26,26 @@
 #define MAC802154_MAX_HEADER_SIZE               24
 
 #define MAC802154_MAX_CHANNELS                  16
+#define MAC802154_MAX_SCAN_PANS                 4
 
 #define MAC802154_FRAME_VERSION                 1
+
+#define MAC802154_CMD_ASSOCIATE_REQUEST         1
+#define MAC802154_CMD_ASSOCIATE_RESPONSE        2
+#define MAC802154_CMD_DISASSOCIATOIN_NOTIFY     3
+#define MAC802154_CMD_DATA_REQUEST              4
+#define MAC802154_CMD_PAN_ID_CONFLICT_NOTIFY    5
+#define MAC802154_CMD_ORPHAN_NOTIFY             6
+#define MAC802154_CMD_BEACON_REQUEST            7
+#define MAC802154_CMD_COORDINATOR_REALIGNMENT   8
+#define MAC802154_CMD_GTS_REQUSET               9
 
 typedef enum {MAC802154_FRAME_TYPE_BEACON = 0, MAC802154_FRAME_TYPE_DATA = 1,
               MAC802154_FRAME_TYPE_ACK = 2, MAC802154_FRAME_TYPE_MAC_CMD = 3} 
               MAC802154FrameType;
 
-typedef enum  {MAC802154_ADDRESS_NOT_PRESENT = 0, MAC802154_ADDRESS_SHORT = 1,
-               MAC802154_ADDRESS_EXTENDED = 2} 
+typedef enum  {MAC802154_ADDRESS_NOT_PRESENT = 0, MAC802154_ADDRESS_SHORT = 2,
+               MAC802154_ADDRESS_EXTENDED = 3}
                MAC802154AddressMode;
 
 //#pragma pack(push, 1)
@@ -75,6 +86,14 @@ typedef struct
     MAC802154Address srcAddress;
     MAC802154Address dstAddress;
 } MAC802154FrameHeader;
+
+typedef struct
+{
+    MAC802154Address coord;
+    uint8_t channel;
+    uint8_t channelPage;
+    uint8_t linkQuality;
+} MAC802154PANDescriptor;
 
 typedef enum {
     MAC802154_MAC_EXTENDED_ADDRESS, MAC802154_MAC_ACK_WAIT_DURATION,
@@ -187,7 +206,8 @@ typedef struct
     MAC802154PHYDriverVMT *phy;
     uint64_t extendedAddress;
     void (*macMLMEScanConfirm)(MAC802154Driver *macp, MAC802154ScanStatus status,
-                               MAC802154ScanType type, int size, const uint8_t *energies);
+                               MAC802154ScanType type, int size, const uint8_t *energies,
+                               MAC802154PANDescriptor *pans);
 } MAC802154Config;
 
 typedef struct _MAC802154Driver
@@ -196,10 +216,15 @@ typedef struct _MAC802154Driver
     MAC802154PIB pib;
     MAC802154State state;
     int stateTimeUS;
+    MAC802154FrameHeader txHeader;
+    MAC802154FrameHeader rxHeader;
     union {
         struct {
             uint8_t scanChannels[MAC802154_MAX_CHANNELS];
-            uint8_t scanEnergies[MAC802154_MAX_CHANNELS];
+            union {
+                uint8_t scanEnergies[MAC802154_MAX_CHANNELS];
+                MAC802154PANDescriptor scanPANs[MAC802154_MAX_SCAN_PANS];
+            };
             int8_t  scanCurrent;
             uint8_t scanCount;
             uint8_t scanPage;
@@ -219,6 +244,9 @@ typedef struct _MAC802154PHYDriverVMT
 
     void (*toggleEnergyScan)(MAC802154Driver *macp, bool on);
     uint8_t (*getEnergy)(MAC802154Driver *macp);
+
+    void (*txPacket)(MAC802154Driver *macp, const MAC802154FrameHeader* h,
+                     uint8_t n, const uint8_t *data);
 } MAC802154PHYDriverVMT;
 
 
@@ -235,5 +263,7 @@ void mac802154Start(MAC802154Driver *macp, const MAC802154Config *config);
 void mac802154Time(MAC802154Driver *macp, int deltaUS);
 void mac802154MLMEScanRequest(MAC802154Driver *macp, MAC802154ScanType type, int *channels,
                               int duration, int channelPage);
+
+void mac802154MCPSDataIndication(MAC802154Driver *macp, uint8_t n, const uint8_t *data);
 
 #endif

@@ -196,13 +196,29 @@ static void mac802154MLMEScanProcess(MAC802154Driver *macp, bool timeout)
         {
             if (macp->cfg->macMLMEScanConfirm)
                 macp->cfg->macMLMEScanConfirm(macp, MAC802154_SCAN_SUCCESS, macp->ctx.scanType,
-                                              macp->ctx.scanCount, macp->ctx.scanEnergies);
+                                              macp->ctx.scanCount, macp->ctx.scanEnergies, 0);
+        }
+        else if ((macp->ctx.scanType == MAC802154_SCAN_ACTIVE) || (macp->ctx.scanType == MAC802154_SCAN_PASSIVE))
+        {
+            if (macp->cfg->macMLMEScanConfirm)
+                macp->cfg->macMLMEScanConfirm(macp, MAC802154_SCAN_SUCCESS, macp->ctx.scanType,
+                                              macp->ctx.scanCount, 0, macp->ctx.scanPANs);
         }
         return;
     }
 
+    macp->cfg->phy->toggleRX(macp, false);
     macp->cfg->phy->set(macp, MAC802154_PHY_CURRENT_CHANNEL, &macp->ctx.scanChannels[macp->ctx.scanCurrent]);
-    macp->cfg->phy->toggleEnergyScan(macp, true);
+    if (macp->ctx.scanType == MAC802154_SCAN_ED)
+        macp->cfg->phy->toggleEnergyScan(macp, true);
+    macp->cfg->phy->toggleRX(macp, true);
+
+    if (macp->ctx.scanType == MAC802154_SCAN_ACTIVE)
+    {
+        macp->txHeader.sequenceNumber = macp->pib.macDSN++;
+        uint8_t beaconRequestCommand = MAC802154_CMD_BEACON_REQUEST;
+        macp->cfg->phy->txPacket(macp, &macp->txHeader, 1, &beaconRequestCommand);
+    }
     macp->stateTimeUS = 0;
 }
 
@@ -249,7 +265,51 @@ void mac802154MLMEScanRequest(MAC802154Driver *macp, MAC802154ScanType type, int
     macp->state = MAC802154_S_SCAN;
     macp->stateTimeUS = 0;
 
+    macp->txHeader.frameType = MAC802154_FRAME_TYPE_MAC_CMD;
+    macp->txHeader.securityEnabled = 0;
+    macp->txHeader.framePending = 0;
+    macp->txHeader.ackRequest = 0;
+    macp->txHeader.panIDCompressed = 0;
+    macp->txHeader.dstAddressMode = MAC802154_ADDRESS_SHORT;
+    macp->txHeader.frameVersion = MAC802154_FRAME_VERSION;
+    macp->txHeader.srcAddressMode = MAC802154_ADDRESS_NOT_PRESENT;
+    macp->txHeader.sequenceNumber = macp->pib.macDSN++;
+    macp->txHeader.dstAddress.panID = 0xFFFF;
+    macp->txHeader.dstAddress.shortAddress = 0xFFFF;
+
     macp->cfg->phy->set(macp, MAC802154_PHY_CURRENT_PAGE, &macp->ctx.scanPage);
 
     mac802154MLMEScanProcess(macp, false);
+}
+
+void mac802154MCPSDataIndication(MAC802154Driver *macp, uint8_t n, const uint8_t *data)
+{
+    mac802154UnpackHeader(data, &macp->rxHeader);
+    const uint8_t *datap = data + mac802154HeaderSize(&macp->rxHeader);
+
+    if (macp->rxHeader.frameType == MAC802154_FRAME_TYPE_MAC_CMD)
+    {
+        if (datap[0] == MAC802154_CMD_BEACON_REQUEST)
+        {
+            macp->txHeader.frameType = MAC802154_FRAME_TYPE_BEACON;
+            macp->txHeader.securityEnabled = 0;
+            macp->txHeader.framePending = 0;
+            macp->txHeader.ackRequest = 0;
+            macp->txHeader.panIDCompressed = 0;
+            macp->txHeader.dstAddressMode = MAC802154_ADDRESS_NOT_PRESENT;
+            macp->txHeader.frameVersion = MAC802154_FRAME_VERSION;
+            macp->txHeader.srcAddressMode = MAC802154_ADDRESS_SHORT;
+            macp->txHeader.sequenceNumber = macp->pib.macBSN++;
+            macp->txHeader.srcAddress.panID = macp->pib.macPANId;
+            macp->txHeader.srcAddress.shortAddress = macp->pib.macShortAddress;
+
+            uint8_t data[4];
+            data[0] = (0xF << 4) | (0xF << 0);
+            data[1] = (1 << 6);
+            data[2] = 0;
+            data[3] = 0;
+
+            macp->cfg->phy->txPacket(macp, &macp->txHeader, 4, data);
+        }
+    }
 }

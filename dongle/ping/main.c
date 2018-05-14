@@ -13,7 +13,8 @@ CC2520Driver CC2520D;
 MAC802154Driver MACD;
 
 static void macScanConfirm(MAC802154Driver *macp, MAC802154ScanStatus status,
-                           MAC802154ScanType type, int size, const uint8_t *energies);
+                           MAC802154ScanType type, int size, const uint8_t *energies,
+                           MAC802154PANDescriptor *pans);
 
 static const SPIConfig spicfg = {
     NULL,
@@ -45,11 +46,12 @@ static THD_FUNCTION(macThread, arg)
 }
 
 static void macScanConfirm(MAC802154Driver *macp, MAC802154ScanStatus status,
-                           MAC802154ScanType type, int size, const uint8_t *energies)
+                           MAC802154ScanType type, int size, const uint8_t *energies,
+                           MAC802154PANDescriptor *pans)
 {
     volatile int testSize = sizeof (MACD);
     chThdSleepMicroseconds(1000);
-    mac802154MLMEScanRequest(&MACD, MAC802154_SCAN_ED, 0, 2, 0);
+    mac802154MLMEScanRequest(&MACD, MAC802154_SCAN_ACTIVE, 0, 2, 0);
 }
 
 int main(void) 
