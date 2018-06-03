@@ -1,5 +1,9 @@
 #include "rfchannel.h"
 
+#ifndef chThdYield
+#define chThdYield() chThdSleepMicroseconds(100)
+#endif
+
 void rfcStart(RFChannelDriver *rfp, const RFChannelConfig *cfg)
 {
     rfp->cfg = cfg;
